@@ -38,15 +38,16 @@ async def generator(_: PipelineConfig) -> AsyncIterator[Input]:
 
 
 async def metric(solution: Output, original_input: Input) -> float:
-    (s, t) = solution
-    weight = 0
-    for u in s:
-        for v in t:
-            for node1, node2, weight in original_input:
-                if (node1 == u and node2 == v) or (node1 == v and node2 == u):
-                    weight += weight
-    total_input_weight = sum([weight for _, _, weight in original_input])
-    return weight / total_input_weight
+    s, t = set(solution[0]), set(solution[1])
+    cut = sum(
+        weight
+        for node1, node2, weight in original_input
+        if (node1 in s and node2 in t) or (node1 in t and node2 in s)
+    )
+    total_input_weight = sum(weight for _, _, weight in original_input)
+    if total_input_weight == 0:
+        return 0.0
+    return cut / total_input_weight
 
 
 async def aggregate(outputs: AsyncIterator[EvaluationResults]) -> float:
